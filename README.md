@@ -5,5 +5,6 @@ This project demonstrates a basic Hardhat use case. It comes with a sample contr
 To deploy populate `.env` file and run:
 
 ```shell
+npm install
 npm run deploy
 ```
