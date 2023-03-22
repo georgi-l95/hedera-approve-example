@@ -25,6 +25,14 @@ async function deploy() {
 
     const wallet = Utils.initWallet(process.env.OPERATOR_ID, process.env.OPERATOR_KEY, Utils.initClient())
 
+    const contractId = await Utils.deployContract(wallet);
+    const tokenId = await Utils.createHTSToken(wallet);
+    const nftTokenId = await Utils.createNFTToken(wallet);
+
+    const nftCollection = await Utils.mintNFT(wallet, nftTokenId);
+
+    await Utils.tokenAssociate(wallet, contractId, [tokenId, nftTokenId]);
+    
     process.exit();
 }
 
