@@ -1,0 +1,19 @@
+{
+  "name": "hedera-approve-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/georgi-l95/hedera-approve-example.git"
+  },
+  "author": "georgi-l95",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/georgi-l95/hedera-approve-example/issues"
+  },
+  "homepage": "https://github.com/georgi-l95/hedera-approve-example#readme"
+}
