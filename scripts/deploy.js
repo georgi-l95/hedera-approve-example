@@ -38,8 +38,8 @@ async function deploy() {
     await Utils.transferToken(wallet, alice.accountId, tokenId, 50);
     await Utils.transferNFTs(wallet, wallet.accountId, alice.accountId, nftTokenId, nftCollection);
 
-    await Utils.approveToken(wallet, alice, wallet.accountId, tokenId, 10);
-    await Utils.approveNFTToken(wallet, alice, contractId, nftTokenId, nftCollection[0].serials[0]);
+    await Utils.approveToken(wallet, alice, contractId.num, tokenId, 10);
+    await Utils.approveNFTToken(wallet, alice, contractId.num, nftTokenId, nftCollection[0].serials[0]);
     process.exit();
 }
 

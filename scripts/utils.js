@@ -206,13 +206,13 @@ export class Utils {
         }
     }
     
-    static async approveToken(wallet, owner, spenderId, tokenId, amount) {
+    static async approveToken(wallet, owner, spenderNum, tokenId, amount) {
         await (
             await (
                 await (
                     await (
                         await new AccountAllowanceApproveTransaction()
-                            .approveTokenAllowance(tokenId, owner.accountId, spenderId, amount)
+                            .approveTokenAllowance(tokenId, owner.accountId, `0.0.${spenderNum}`, amount)
                             .freezeWithSigner(wallet)
                     ).sign(owner.accountKey)
                 ).signWithSigner(wallet)
@@ -220,18 +220,18 @@ export class Utils {
         ).getReceiptWithSigner(wallet);
 
         console.log(
-            `Approval granted to ${spenderId} for ${amount} tokens`
+            `Approval granted to 0.0.${spenderNum} for ${amount} tokens`
         );
     }
 
-    static async approveNFTToken(wallet, owner, spenderId, tokenId, serialNumber) {
+    static async approveNFTToken(wallet, owner, spenderNum, tokenId, serialNumber) {
         const nftId = new NftId(tokenId, serialNumber);
         await (
             await (
                 await (
                     await (
                         await new AccountAllowanceApproveTransaction()
-                            .approveTokenNftAllowance(nftId, owner.accountId, spenderId)
+                            .approveTokenNftAllowance(nftId, owner.accountId, `0.0.${spenderNum}`)
                             .freezeWithSigner(wallet)
                     ).sign(owner.accountKey)
                 ).signWithSigner(wallet)
@@ -239,7 +239,7 @@ export class Utils {
         ).getReceiptWithSigner(wallet);
 
         console.log(
-            `Approval granted to ${spenderId} for nftId: ${tokenId} with serial number ${serialNumber}`
+            `Approval granted to 0.0.${spenderNum} for nftId: ${tokenId} with serial number ${serialNumber}`
         );
     }
 
