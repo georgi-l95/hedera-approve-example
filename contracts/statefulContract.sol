@@ -1,15 +1,27 @@
-// SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity >=0.4.22 <0.9;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+contract StatefulContract {
+    // the contract's owner, set in the constructor
+    address owner;
 
-contract ERC20Contract {
-    function allowance(address token, address owner, address spender) external view returns (uint256) {
-        return IERC20(token).allowance(owner, spender);
+    // the message we're storing
+    string message;
+
+    constructor(string memory message_) public {
+        // set the owner of the contract for `kill()`
+        owner = msg.sender;
+        message = message_;
     }
 
-    function approve(address token, address spender, uint256 amount) external returns (bool) {
-        return IERC20(token).approve(spender, amount);
+    function set_message(string memory message_) public {
+        // only allow the owner to update the message
+        if (msg.sender != owner) return;
+        message = message_;
+    }
+
+    // return a string
+    function get_message() public view returns (string memory) {
+        return message;
     }
 }
