@@ -1,6 +1,6 @@
-import { Client, ContractCreateTransaction, ContractFunctionParameters, FileCreateTransaction, LocalProvider, TokenAssociateTransaction, TokenCreateTransaction, TokenMintTransaction, TokenSupplyType, TokenType, Wallet } from "@hashgraph/sdk";
+import { AccountAllowanceApproveTransaction, AccountCreateTransaction, Client, ContractCreateTransaction, ContractFunctionParameters, FileCreateTransaction, Hbar, LocalProvider, NftId, PrivateKey, TokenAssociateTransaction, TokenCreateTransaction, TokenMintTransaction, TokenSupplyType, TokenType, TransferTransaction, Wallet } from "@hashgraph/sdk";
 import dotenv from "dotenv";
-import contract from "../contracts/ApproveContract.json" assert { type: "json" };
+import stateful from "../contracts/statefulContract.json" assert { type: "json" };
 
 dotenv.config();
 
@@ -29,20 +29,36 @@ export class Utils {
             new LocalProvider({client: client})
         );
     }
+
+    static async createAccount(wallet) {
+        const accountKey = PrivateKey.generateED25519();
+        let transaction = await new AccountCreateTransaction()
+            .setKey(accountKey)
+            .setInitialBalance(new Hbar(5))
+            .freezeWithSigner(wallet);
+
+        transaction = await transaction.signWithSigner(wallet);
+        const response = await transaction.executeWithSigner(wallet);
+
+        const accountId = (await response.getReceiptWithSigner(wallet)).accountId;
+        console.log(`Created Account with accountId: ${accountId}`);
+        return { accountId, accountKey };
+    }
     
     static async createHTSToken(wallet) {
         let transaction = await new TokenCreateTransaction()
-        .setTokenName("ffff")
-        .setTokenSymbol("F")
-        .setDecimals(3)
-        .setInitialSupply(100)
-        .setTreasuryAccountId(wallet.getAccountId())
-        .setAdminKey(wallet.getAccountKey())
-        .setFreezeKey(wallet.getAccountKey())
-        .setWipeKey(wallet.getAccountKey())
-        .setSupplyKey(wallet.getAccountKey())
-        .setFreezeDefault(false)
-        .freezeWithSigner(wallet);
+            .setTokenName("ffff")
+            .setTokenSymbol("F")
+            .setDecimals(3)
+            .setInitialSupply(100)
+            .setTreasuryAccountId(wallet.getAccountId())
+            .setAdminKey(wallet.getAccountKey())
+            .setFreezeKey(wallet.getAccountKey())
+            .setWipeKey(wallet.getAccountKey())
+            .setSupplyKey(wallet.getAccountKey())
+            .setFreezeDefault(false)
+            .freezeWithSigner(wallet);
+
         transaction = await transaction.signWithSigner(wallet);
         const resp = await transaction.executeWithSigner(wallet);
 
@@ -53,17 +69,17 @@ export class Utils {
 
     static async createNFTToken(wallet) {
         let nftCreateTx = new TokenCreateTransaction()
-        .setTokenName("NFT Token")
-        .setTokenSymbol("NFTT")
-        .setTokenType(TokenType.NonFungibleUnique)
-        .setDecimals(0)
-        .setInitialSupply(0)
-        .setMaxSupply(this.CID.length)
-        .setTreasuryAccountId(wallet.getAccountId())
-        .setSupplyType(TokenSupplyType.Finite)
-        .setAdminKey(wallet.getAccountKey())
-        .setSupplyKey(wallet.getAccountKey())
-        .freezeWithSigner(wallet);
+            .setTokenName("NFT Token")
+            .setTokenSymbol("NFTT")
+            .setTokenType(TokenType.NonFungibleUnique)
+            .setDecimals(0)
+            .setInitialSupply(0)
+            .setMaxSupply(this.CID.length)
+            .setTreasuryAccountId(wallet.getAccountId())
+            .setSupplyType(TokenSupplyType.Finite)
+            .setAdminKey(wallet.getAccountKey())
+            .setSupplyKey(wallet.getAccountKey())
+            .freezeWithSigner(wallet);
 
         let nftCreateTxSign = await (await nftCreateTx).signWithSigner(wallet);
         let nftCreateSubmit = await nftCreateTxSign.executeWithSigner(wallet);
@@ -89,27 +105,31 @@ export class Utils {
         return nftCollection;
     }
 
-    static async tokenAssociate(wallet, contractId, tokenIds) {
+    static async tokenAssociate(wallet, accountId, accountKey, tokenIds, clientOwned = false) {
+        let transaction = await new TokenAssociateTransaction()
+            .setAccountId(accountId.toString())
+            .setTokenIds(tokenIds)
+            .freezeWithSigner(wallet)
+        if (!clientOwned) {
+            transaction
+                .sign(accountKey)
+        }
         await (
             await (
-                await (
-                    await new TokenAssociateTransaction()
-                        .setAccountId(contractId.toString())
-                        .setTokenIds(tokenIds)
-                        .freezeWithSigner(wallet)
-                ).signWithSigner(wallet)
+                await transaction
+                    .signWithSigner(wallet)
             ).executeWithSigner(wallet)
         ).getReceiptWithSigner(wallet);
     
         for (let index = 0; index < tokenIds.length; index++) {
             console.log(
-                `Associated account ${contractId.toString()} with token ${tokenIds[index].toString()}`
+                `Associated account ${accountId.toString()} with token ${tokenIds[index].toString()}`
             );
         }
     }
 
     static async deployContract(wallet) {
-        const contractByteCode = /** @type {string} */ (contract.bytecode);
+        const contractByteCode = /** @type {string} */ (stateful.object);
 
         let transaction = await new FileCreateTransaction()
             .setKeys([wallet.getAccountKey()])
@@ -144,6 +164,83 @@ export class Utils {
 
         console.log(`Deployed new Contract with contractId: ${contractId.toString()}`);
         return contractId;
+    }
+
+    static async transferToken(wallet, accountId, tokenId, amount) {
+        await (
+            await (
+                await (
+                    await new TransferTransaction()
+                        .addTokenTransfer(tokenId, wallet.getAccountId(), -amount)
+                        .addTokenTransfer(tokenId, accountId, amount)
+                        .freezeWithSigner(wallet)
+                ).signWithSigner(wallet)
+            ).executeWithSigner(wallet)
+        ).getReceiptWithSigner(wallet);
+    
+        console.log(
+            `Sent ${amount} tokens from account ${wallet
+                .getAccountId()
+                .toString()} to account ${accountId.toString()} on token ${tokenId.toString()}`
+        );
+    }
+
+    static async transferNFTs(wallet, senderId, receiverId, tokenId, nfts) {
+        for (let index = 0; index < nfts.length; index++) {
+            const nftSerial = nfts[index].serials[0];
+            await (
+                await (
+                    await (
+                        await new TransferTransaction()
+                            .addNftTransfer(tokenId, nftSerial, senderId, receiverId)
+                            .freezeWithSigner(wallet)
+                    ).signWithSigner(wallet)
+                ).executeWithSigner(wallet)
+            ).getReceiptWithSigner(wallet);
+        
+            console.log(
+                `Sent ${nftSerial.toString()} tokens from account ${wallet
+                    .getAccountId()
+                    .toString()} to account ${receiverId.toString()} on token ${tokenId.toString()}`
+            );
+        }
+    }
+    
+    static async approveToken(wallet, owner, spenderId, tokenId, amount) {
+        await (
+            await (
+                await (
+                    await (
+                        await new AccountAllowanceApproveTransaction()
+                            .approveTokenAllowance(tokenId, owner.accountId, spenderId, amount)
+                            .freezeWithSigner(wallet)
+                    ).sign(owner.accountKey)
+                ).signWithSigner(wallet)
+            ).executeWithSigner(wallet)
+        ).getReceiptWithSigner(wallet);
+
+        console.log(
+            `Approval granted to ${spenderId} for ${amount} tokens`
+        );
+    }
+
+    static async approveNFTToken(wallet, owner, spenderId, tokenId, serialNumber) {
+        const nftId = new NftId(tokenId, serialNumber);
+        await (
+            await (
+                await (
+                    await (
+                        await new AccountAllowanceApproveTransaction()
+                            .approveTokenNftAllowance(nftId, owner.accountId, spenderId)
+                            .freezeWithSigner(wallet)
+                    ).sign(owner.accountKey)
+                ).signWithSigner(wallet)
+            ).executeWithSigner(wallet)
+        ).getReceiptWithSigner(wallet);
+
+        console.log(
+            `Approval granted to ${spenderId} for nftId: ${tokenId} with serial number ${serialNumber}`
+        );
     }
 
     /**

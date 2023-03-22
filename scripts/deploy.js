@@ -22,8 +22,9 @@ async function deploy() {
             "Environment variables OPERATOR_ID, and OPERATOR_KEY are required."
         );
     }
-
     const wallet = Utils.initWallet(process.env.OPERATOR_ID, process.env.OPERATOR_KEY, Utils.initClient())
+
+    const alice = await Utils.createAccount(wallet);
 
     const contractId = await Utils.deployContract(wallet);
     const tokenId = await Utils.createHTSToken(wallet);
@@ -31,8 +32,14 @@ async function deploy() {
 
     const nftCollection = await Utils.mintNFT(wallet, nftTokenId);
 
-    await Utils.tokenAssociate(wallet, contractId, [tokenId, nftTokenId]);
+    await Utils.tokenAssociate(wallet, alice.accountId, alice.accountKey, [tokenId, nftTokenId]);
+    await Utils.tokenAssociate(wallet, contractId, null, [tokenId, nftTokenId], true);
     
+    await Utils.transferToken(wallet, alice.accountId, tokenId, 50);
+    await Utils.transferNFTs(wallet, wallet.accountId, alice.accountId, nftTokenId, nftCollection);
+
+    await Utils.approveToken(wallet, alice, wallet.accountId, tokenId, 10);
+    await Utils.approveNFTToken(wallet, alice, contractId, nftTokenId, nftCollection[0].serials[0]);
     process.exit();
 }
 

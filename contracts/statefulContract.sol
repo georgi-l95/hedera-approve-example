@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-contract ApproveContract {
+contract ERC20Contract {
     function allowance(address token, address owner, address spender) external view returns (uint256) {
         return IERC20(token).allowance(owner, spender);
     }
