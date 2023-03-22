@@ -19,6 +19,7 @@
   "homepage": "https://github.com/georgi-l95/hedera-approve-example#readme",
   "dependencies": {
     "@hashgraph/sdk": "^2.23.0",
+    "@openzeppelin/contracts": "^4.8.2",
     "dotenv": "^16.0.3"
   }
 }

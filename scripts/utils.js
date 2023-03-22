@@ -1,6 +1,6 @@
 import { Client, ContractCreateTransaction, ContractFunctionParameters, FileCreateTransaction, LocalProvider, TokenAssociateTransaction, TokenCreateTransaction, TokenMintTransaction, TokenSupplyType, TokenType, Wallet } from "@hashgraph/sdk";
 import dotenv from "dotenv";
-import stateful from "../contracts/statefulContract.json" assert { type: "json" };
+import contract from "../contracts/ApproveContract.json" assert { type: "json" };
 
 dotenv.config();
 
@@ -109,7 +109,7 @@ export class Utils {
     }
 
     static async deployContract(wallet) {
-        const contractByteCode = /** @type {string} */ (stateful.object);
+        const contractByteCode = /** @type {string} */ (contract.bytecode);
 
         let transaction = await new FileCreateTransaction()
             .setKeys([wallet.getAccountKey()])
