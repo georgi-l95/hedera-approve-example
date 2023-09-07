@@ -1,46 +1,24 @@
-import {
-    Wallet,
-    LocalProvider,
-    ContractCreateTransaction,
-    ContractExecuteTransaction,
-    FileCreateTransaction,
-    ContractFunctionParameters,
-    ContractCallQuery,
-    Hbar,
-    Client,
-} from "@hashgraph/sdk";
+// We require the Hardhat Runtime Environment explicitly here. This is optional
+// but useful for running the script in a standalone fashion through `node <script>`.
+//
+// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
+// will compile your contracts, add the Hardhat Runtime Environment's members to the
+// global scope, and execute the script.
+import hre from "hardhat";
 
-import { Utils } from "./utils.js";
+const currentTimestampInSeconds = Math.round(Date.now() / 1000);
+const unlockTime = currentTimestampInSeconds + 60;
 
-import dotenv from "dotenv";
+const lockedAmount = hre.ethers.parseEther("0.001");
 
-dotenv.config();
+const lock = await ethers.deployContract("Lock", [unlockTime], {
+  value: lockedAmount,
+});
 
-async function deploy() {
-    if (process.env.OPERATOR_ID == null || process.env.OPERATOR_KEY == null) {
-        throw new Error(
-            "Environment variables OPERATOR_ID, and OPERATOR_KEY are required."
-        );
-    }
-    const wallet = Utils.initWallet(process.env.OPERATOR_ID, process.env.OPERATOR_KEY, Utils.initClient())
+await lock.waitForDeployment();
 
-    const alice = await Utils.createAccount(wallet);
-
-    const contractId = await Utils.deployContract(wallet);
-    const tokenId = await Utils.createHTSToken(wallet);
-    const nftTokenId = await Utils.createNFTToken(wallet);
-
-    const nftCollection = await Utils.mintNFT(wallet, nftTokenId);
-
-    await Utils.tokenAssociate(wallet, alice.accountId, alice.accountKey, [tokenId, nftTokenId]);
-    await Utils.tokenAssociate(wallet, contractId, null, [tokenId, nftTokenId], true);
-    
-    await Utils.transferToken(wallet, alice.accountId, tokenId, 50);
-    await Utils.transferNFTs(wallet, wallet.accountId, alice.accountId, nftTokenId, nftCollection);
-
-    await Utils.approveToken(wallet, alice, contractId.num, tokenId, 10);
-    await Utils.approveNFTToken(wallet, alice, contractId.num, nftTokenId, nftCollection[0].serials[0]);
-    process.exit();
-}
-
-deploy();
+console.log(
+  `Lock with ${ethers.formatEther(
+    lockedAmount
+  )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
+);
