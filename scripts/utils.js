@@ -1,4 +1,4 @@
-import { AccountAllowanceApproveTransaction, AccountCreateTransaction, Client, ContractCreateTransaction, ContractFunctionParameters, FileCreateTransaction, Hbar, LocalProvider, NftId, PrivateKey, TokenAssociateTransaction, TokenCreateTransaction, TokenMintTransaction, TokenSupplyType, TokenType, TransferTransaction, Wallet } from "@hashgraph/sdk";
+import { AccountAllowanceApproveTransaction, EthereumTransaction, AccountDeleteTransaction, TransactionReceiptQuery,AccountCreateTransaction, Client, ContractCreateTransaction, ContractFunctionParameters, FileCreateTransaction, Hbar, LocalProvider, NftId, PrivateKey, TokenAssociateTransaction, TokenCreateTransaction, TokenMintTransaction, TokenSupplyType, TokenType, TransferTransaction, Wallet } from "@hashgraph/sdk";
 import dotenv from "dotenv";
 import stateful from "../contracts/statefulContract.json" assert { type: "json" };
 
@@ -12,14 +12,14 @@ export class Utils {
     ];
 
     static initClient() {
-        let client;
-        const network = process.env.HEDERA_NETWORK || '{}';
-        if (process.env.SUPPORTED_ENV.includes(network.toLowerCase())) {
-            client = Client.forName(network);
-        } else {
-            client = Client.forNetwork(JSON.parse(network));
-        }
-        return client;
+        // let client;
+        // const network = process.env.HEDERA_NETWORK || '{}';
+        // if (process.env.SUPPORTED_ENV.includes(network.toLowerCase())) {
+        //     client = Client.forName(network);
+        // } else {
+        //     client = Client.forNetwork(JSON.parse(network));
+        // }
+        return Client.forNetwork(JSON.parse('{"127.0.0.1:50211":"0.0.3"}'));
     }
     
     static initWallet(id, key, client) {
@@ -30,19 +30,59 @@ export class Utils {
         );
     }
 
-    static async createAccount(wallet) {
-        const accountKey = PrivateKey.generateED25519();
-        let transaction = await new AccountCreateTransaction()
-            .setKey(accountKey)
-            .setInitialBalance(new Hbar(5))
-            .freezeWithSigner(wallet);
 
+
+    static async transferAccountEvm(wallet, operatorId, evmAddress) {
+        const transferTx = new TransferTransaction()
+        .addHbarTransfer(operatorId, -10)
+        .addHbarTransfer(evmAddress, 10)
+        .freezeWithSigner(wallet);
+
+    const transferTxSign = await (await transferTx).sign(PrivateKey.fromStringDer("302e020100300506032b657004220420fa86340af9d531d8dd5c38535ceec929a348ff8c9d9a638030b73270dcf97485"));
+    const transferTxSubmit = await transferTxSign.executeWithSigner(wallet);
+
+    /**
+     * Step 5
+     *
+     * Get the child receipt or child record to return the Hedera Account ID for the new account that was created
+     */
+    const receipt = await new TransactionReceiptQuery()
+        .setTransactionId(transferTxSubmit.transactionId)
+        .setIncludeChildren(true)
+        .executeWithSigner(wallet);
+        console.log(receipt)
+    const accountId = receipt.children[0].accountId;
+    console.log(`Account ID of the newly created account: ${accountId.toString()}`);
+    return { accountId };
+    }
+    static async createAccount(wallet, alias, key) {
+        let transaction = await new AccountCreateTransaction()
+            .setAlias(alias)
+            .setKey(PrivateKey.fromStringDer("302e020100300506032b65700422042091132178e72057a1d7528025956fe39b0b847f200ab59b2fdd367017f3087137"))
+            .setInitialBalance(new Hbar(10))
+            .freezeWithSigner(wallet);
+        await transaction.sign(key);
         transaction = await transaction.signWithSigner(wallet);
         const response = await transaction.executeWithSigner(wallet);
 
         const accountId = (await response.getReceiptWithSigner(wallet)).accountId;
         console.log(`Created Account with accountId: ${accountId}`);
-        return { accountId, accountKey };
+        return { accountId, key };
+    }
+
+    static async deleteAccount(wallet, accountId, accountKey) {
+        let accountDeleteTransaction = await new AccountDeleteTransaction()
+            .setAccountId(accountId)
+            .setTransferAccountId(wallet.getAccountId())
+            .freezeWithSigner(wallet);
+            await accountDeleteTransaction.sign(accountKey);
+        await accountDeleteTransaction.sign( PrivateKey.fromStringDer("302e020100300506032b65700422042091132178e72057a1d7528025956fe39b0b847f200ab59b2fdd367017f3087137"))
+        accountDeleteTransaction =
+            await accountDeleteTransaction.signWithSigner(wallet);
+
+        const r = await accountDeleteTransaction.executeWithSigner(wallet);
+
+        console.log(await r.getReceiptWithSigner(wallet))
     }
     
     static async createHTSToken(wallet) {
@@ -164,6 +204,25 @@ export class Utils {
 
         console.log(`Deployed new Contract with contractId: ${contractId.toString()}`);
         return contractId;
+    }
+
+    static async ethereumTransactionDispatch(wallet,accountKey){
+
+        const ethereumData = Buffer.from("00112233445566778899", "hex")
+        const maxGasAllowance = Hbar.fromTinybars(10000000);
+
+        let transaction = new EthereumTransaction()
+            .setEthereumData(ethereumData)
+            .setMaxGasAllowanceHbar(maxGasAllowance)
+            .freezeWithSigner(wallet);
+        (await transaction).sign(accountKey);
+        (await transaction).signWithSigner(wallet);
+        const contractTransactionResponse = await (await transaction).executeWithSigner(
+            wallet
+        );
+        const contractReceipt =
+        await contractTransactionResponse.getReceiptWithSigner(wallet);
+        console.log(contractReceipt)
     }
 
     static async transferToken(wallet, accountId, tokenId, amount) {
