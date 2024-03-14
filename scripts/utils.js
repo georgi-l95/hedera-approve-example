@@ -33,14 +33,14 @@ export class Utils {
   ];
 
   static initClient() {
-    // let client;
-    // const network = process.env.HEDERA_NETWORK || '{}';
-    // if (process.env.SUPPORTED_ENV.includes(network.toLowerCase())) {
-    //     client = Client.forName(network);
-    // } else {
-    //     client = Client.forNetwork(JSON.parse(network));
-    // }
-    return Client.forNetwork(JSON.parse('{"127.0.0.1:50211":"0.0.3"}'));
+    let client;
+    const network = process.env.HEDERA_NETWORK || "{}";
+    if (process.env.SUPPORTED_ENV.includes(network.toLowerCase())) {
+      client = Client.forName(network);
+    } else {
+      client = Client.forNetwork(JSON.parse(network));
+    }
+    return client;
   }
 
   static initWallet(id, key, client) {
@@ -109,7 +109,9 @@ export class Utils {
 
     const r = await accountDeleteTransaction.executeWithSigner(wallet);
 
-    console.log(await r.getReceiptWithSigner(wallet));
+    console.log(
+      `Delete account Status: ${(await r.getReceiptWithSigner(wallet)).status}`
+    );
   }
 
   static async createHTSToken(wallet) {

@@ -19,13 +19,8 @@ async function deploy() {
   );
   const accountKey = PrivateKey.generateECDSA();
   const alias = accountKey.publicKey.toEvmAddress();
-  const alice = await Utils.transferAccountEvm(
-    wallet,
-    process.env.OPERATOR_ID,
-    alias
-  );
+  const alice = await Utils.createAccount(wallet, alias, accountKey);
   await Utils.deleteAccount(wallet, alice.accountId, accountKey);
-  // const bob = await Utils.transferAccountEvm(wallet,process.env.OPERATOR_ID, alias );
   const bob = await Utils.createAccount(wallet, alias, accountKey);
   process.exit();
 }
