@@ -44,7 +44,11 @@ export class Utils {
   }
 
   static initWallet(id, key, client) {
-    return new Wallet(id, key, new LocalProvider({ client: client }));
+    return new Wallet(
+      id,
+      PrivateKey.fromStringECDSA(key),
+      new LocalProvider({ client: client })
+    );
   }
 
   static async transferAccountEvm(wallet, operatorId, evmAddress) {
@@ -76,11 +80,7 @@ export class Utils {
   static async createAccount(wallet, alias, key) {
     let transaction = await new AccountCreateTransaction()
       .setAlias(alias)
-      .setKey(
-        PrivateKey.fromStringDer(
-          "302e020100300506032b65700422042091132178e72057a1d7528025956fe39b0b847f200ab59b2fdd367017f3087137"
-        )
-      )
+      .setKey(key)
       .setInitialBalance(new Hbar(10))
       .freezeWithSigner(wallet);
     await transaction.sign(key);
@@ -98,11 +98,6 @@ export class Utils {
       .setTransferAccountId(wallet.getAccountId())
       .freezeWithSigner(wallet);
     await accountDeleteTransaction.sign(accountKey);
-    await accountDeleteTransaction.sign(
-      PrivateKey.fromStringDer(
-        "302e020100300506032b65700422042091132178e72057a1d7528025956fe39b0b847f200ab59b2fdd367017f3087137"
-      )
-    );
     accountDeleteTransaction = await accountDeleteTransaction.signWithSigner(
       wallet
     );

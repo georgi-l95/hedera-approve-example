@@ -17,11 +17,13 @@ async function deploy() {
     process.env.OPERATOR_KEY,
     Utils.initClient()
   );
-  const accountKey = PrivateKey.generateECDSA();
-  const alias = accountKey.publicKey.toEvmAddress();
-  const alice = await Utils.createAccount(wallet, alias, accountKey);
-  await Utils.deleteAccount(wallet, alice.accountId, accountKey);
-  const bob = await Utils.createAccount(wallet, alias, accountKey);
+  const accountID = process.env.ACCOUNT_ID;
+  const accountKey = PrivateKey.fromStringECDSA(process.env.ACCOUNT_KEY);
+  // const accountKey = PrivateKey.generateECDSA();
+  // const alias = accountKey.publicKey.toEvmAddress();
+  // const alice = await Utils.createAccount(wallet, alias, accountKey);
+  await Utils.deleteAccount(wallet, accountID, accountKey);
+  // const bob = await Utils.createAccount(wallet, alias, accountKey);
   process.exit();
 }
 
