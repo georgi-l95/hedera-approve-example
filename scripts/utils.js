@@ -1,8 +1,16 @@
 import { AccountAllowanceApproveTransaction, AccountCreateTransaction, Client, ContractCreateTransaction, ContractFunctionParameters, FileCreateTransaction, Hbar, LocalProvider, NftId, PrivateKey, TokenAssociateTransaction, TokenCreateTransaction, TokenMintTransaction, TokenSupplyType, TokenType, TransferTransaction, Wallet } from "@hashgraph/sdk";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
-import stateful from "../contracts/statefulContract.json" assert { type: "json" };
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const stateful = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "../contracts/statefulContract.json"), "utf8")
+);
 
 export class Utils {
     static CID = [
@@ -12,14 +20,29 @@ export class Utils {
     ];
 
     static initClient() {
-        let client;
-        const network = process.env.HEDERA_NETWORK || '{}';
-        if (process.env.SUPPORTED_ENV.includes(network.toLowerCase())) {
-            client = Client.forName(network);
-        } else {
-            client = Client.forNetwork(JSON.parse(network));
+        const networkEnv = process.env.HEDERA_NETWORK;
+        const supportedEnv = process.env.SUPPORTED_ENV;
+
+        if (networkEnv && supportedEnv) {
+            const normalizedNetwork = networkEnv.trim().toLowerCase();
+            const normalizedSupported = supportedEnv
+                .split(",")
+                .map((entry) => entry.trim().toLowerCase())
+                .filter(Boolean);
+            if (normalizedSupported.includes(normalizedNetwork)) {
+                return Client.forName(normalizedNetwork);
+            }
         }
-        return client;
+
+        if (networkEnv) {
+            try {
+                return Client.forNetwork(JSON.parse(networkEnv));
+            } catch {
+                return Client.forName(networkEnv.trim());
+            }
+        }
+
+        return Client.forName("testnet");
     }
     
     static initWallet(id, key, client) {
@@ -30,11 +53,11 @@ export class Utils {
         );
     }
 
-    static async createAccount(wallet) {
+    static async createAccount(wallet, initialBalanceHbar = 5) {
         const accountKey = PrivateKey.generateED25519();
         let transaction = await new AccountCreateTransaction()
             .setKey(accountKey)
-            .setInitialBalance(new Hbar(5))
+            .setInitialBalance(new Hbar(initialBalanceHbar))
             .freezeWithSigner(wallet);
 
         transaction = await transaction.signWithSigner(wallet);

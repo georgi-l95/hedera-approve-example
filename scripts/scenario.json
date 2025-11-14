@@ -1,0 +1,13 @@
+{
+  "accountPoolSize": 10,
+  "accountInitialBalanceHbar": 10,
+  "transferAmountHbarRange": [0.0001, 0.001],
+  "stages": [
+    { "tps": 10, "durationSeconds": 120 },
+    { "tps": 20, "durationSeconds": 120 },
+    { "tps": 50, "durationSeconds": 120 },
+    { "tps": 100, "durationSeconds": 120 },
+    { "tps": 250, "durationSeconds": 120 },
+    { "tps": 500, "durationSeconds": 120 }
+  ]
+}

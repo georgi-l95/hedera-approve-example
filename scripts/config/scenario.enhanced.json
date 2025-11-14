@@ -1,0 +1,61 @@
+{
+  "accountPoolSize": 15,
+  "accountInitialBalanceHbar": 20,
+  "transferAmountHbarRange": [0.0001, 0.01],
+  "tokenTransferAmount": [1, 20],
+  "enableTokenOperations": true,
+  "enableNFTOperations": true,
+  "operationWeights": {
+    "HBAR_TRANSFER": 10,
+    "TOKEN_TRANSFER": 5,
+    "NFT_TRANSFER": 2,
+    "TOKEN_APPROVAL": 3
+  },
+  "retryConfig": {
+    "maxRetries": 3,
+    "backoffMs": 1000,
+    "retriableStatuses": [
+      "BUSY",
+      "PLATFORM_NOT_ACTIVE",
+      "THROTTLED_AT_CONSENSUS",
+      "PLATFORM_TRANSACTION_NOT_CREATED"
+    ]
+  },
+  "stages": [
+    {
+      "tps": 5,
+      "durationSeconds": 60,
+      "description": "Warm-up stage"
+    },
+    {
+      "tps": 10,
+      "durationSeconds": 120,
+      "description": "Low load baseline"
+    },
+    {
+      "tps": 25,
+      "durationSeconds": 120,
+      "description": "Moderate load"
+    },
+    {
+      "tps": 50,
+      "durationSeconds": 120,
+      "description": "Medium load"
+    },
+    {
+      "tps": 100,
+      "durationSeconds": 120,
+      "description": "High load"
+    },
+    {
+      "tps": 200,
+      "durationSeconds": 60,
+      "description": "Peak load test"
+    },
+    {
+      "tps": 50,
+      "durationSeconds": 60,
+      "description": "Cool-down stage"
+    }
+  ]
+}

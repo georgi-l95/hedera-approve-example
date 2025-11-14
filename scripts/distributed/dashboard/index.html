@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hedera Load Test Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Hedera Load Test Dashboard</h1>
+            <div class="connection-status">
+                <span id="connectionStatus" class="status-indicator offline">●</span>
+                <span id="connectionText">Disconnected</span>
+            </div>
+        </header>
+
+        <div class="control-panel">
+            <h2>Test Control</h2>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="workerCount">Workers:</label>
+                    <input type="number" id="workerCount" min="1" max="10" value="2">
+                </div>
+                <div class="control-group">
+                    <label for="targetTps">Target TPS:</label>
+                    <input type="number" id="targetTps" min="1" max="1000" value="10">
+                </div>
+                <div class="control-group">
+                    <label for="duration">Duration (s):</label>
+                    <input type="number" id="duration" min="10" max="3600" value="60">
+                </div>
+                <div class="button-group">
+                    <button id="startTest" class="btn btn-primary">Start Test</button>
+                    <button id="stopTest" class="btn btn-danger" disabled>Stop Test</button>
+                </div>
+            </div>
+            <div id="testStatus" class="test-status">
+                <span class="status-label">Status:</span>
+                <span id="testStatusText">Idle</span>
+            </div>
+        </div>
+
+        <div class="workers-panel">
+            <h2>Worker Nodes</h2>
+            <div id="workersList" class="workers-list">
+                <div class="no-workers">No workers connected</div>
+            </div>
+        </div>
+
+        <div class="metrics-overview">
+            <h2>Real-time Metrics</h2>
+            <div class="metric-cards">
+                <div class="metric-card">
+                    <div class="metric-label">Total Transactions</div>
+                    <div class="metric-value" id="totalTransactions">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Success Rate</div>
+                    <div class="metric-value" id="successRate">0%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Current TPS</div>
+                    <div class="metric-value" id="currentTps">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Latency (ms)</div>
+                    <div class="metric-value" id="avgLatency">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">P95 Latency (ms)</div>
+                    <div class="metric-value" id="p95Latency">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Active Workers</div>
+                    <div class="metric-value" id="activeWorkers">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-panel">
+                <h3>Throughput (TPS)</h3>
+                <canvas id="tpsChart"></canvas>
+            </div>
+            <div class="chart-panel">
+                <h3>Latency (ms)</h3>
+                <canvas id="latencyChart"></canvas>
+            </div>
+            <div class="chart-panel">
+                <h3>Success/Failure Rate</h3>
+                <canvas id="successChart"></canvas>
+            </div>
+            <div class="chart-panel">
+                <h3>Error Distribution</h3>
+                <canvas id="errorChart"></canvas>
+            </div>
+        </div>
+
+        <div class="logs-panel">
+            <h2>Activity Log</h2>
+            <div id="activityLog" class="activity-log">
+                <div class="log-entry">Dashboard initialized</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <h2>Advanced Configuration</h2>
+            <div class="config-form">
+                <div class="form-group">
+                    <label>Account Pool Size:</label>
+                    <input type="number" id="configAccountPool" value="10">
+                </div>
+                <div class="form-group">
+                    <label>Initial Balance (HBAR):</label>
+                    <input type="number" id="configInitialBalance" value="10">
+                </div>
+                <div class="form-group">
+                    <label>Enable Token Operations:</label>
+                    <input type="checkbox" id="configEnableTokens">
+                </div>
+                <div class="form-group">
+                    <label>Enable NFT Operations:</label>
+                    <input type="checkbox" id="configEnableNFTs">
+                </div>
+                <div class="form-group">
+                    <label>Stages (JSON):</label>
+                    <textarea id="configStages" rows="6">[
+  { "tps": 10, "durationSeconds": 30 },
+  { "tps": 25, "durationSeconds": 30 },
+  { "tps": 50, "durationSeconds": 30 }
+]</textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button id="applyConfig" class="btn btn-primary">Apply</button>
+                    <button id="cancelConfig" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

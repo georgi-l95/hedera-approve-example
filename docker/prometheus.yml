@@ -1,0 +1,38 @@
+# Prometheus configuration for Hedera Load Testing
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+  external_labels:
+    monitor: 'hedera-loadtest'
+
+scrape_configs:
+  # Scrape the coordinator metrics
+  - job_name: 'coordinator'
+    static_configs:
+      - targets: ['coordinator:9090']
+        labels:
+          service: 'coordinator'
+          environment: 'production'
+
+  # Scrape Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Scrape StatsD exporter if using one
+  - job_name: 'statsd'
+    static_configs:
+      - targets: ['statsd:9102']
+        labels:
+          service: 'statsd'
+
+# Alerting rules (optional)
+rule_files:
+  # - '/etc/prometheus/alerts.yml'
+
+# Alertmanager configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - 'alertmanager:9093'

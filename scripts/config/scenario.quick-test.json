@@ -1,0 +1,35 @@
+{
+  "accountPoolSize": 5,
+  "accountInitialBalanceHbar": 5,
+  "transferAmountHbarRange": [0.0001, 0.001],
+  "tokenTransferAmount": [1, 5],
+  "enableTokenOperations": true,
+  "enableNFTOperations": false,
+  "operationWeights": {
+    "HBAR_TRANSFER": 10,
+    "TOKEN_TRANSFER": 5,
+    "TOKEN_APPROVAL": 2
+  },
+  "retryConfig": {
+    "maxRetries": 2,
+    "backoffMs": 500,
+    "retriableStatuses": ["BUSY", "PLATFORM_NOT_ACTIVE"]
+  },
+  "stages": [
+    {
+      "tps": 2,
+      "durationSeconds": 10,
+      "description": "Quick warm-up"
+    },
+    {
+      "tps": 5,
+      "durationSeconds": 15,
+      "description": "Quick test"
+    },
+    {
+      "tps": 10,
+      "durationSeconds": 10,
+      "description": "Quick peak"
+    }
+  ]
+}

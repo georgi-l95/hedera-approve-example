@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  # Load Test Coordinator
+  coordinator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.coordinator
+    container_name: hedera-coordinator
+    ports:
+      - "3000:3000"   # Dashboard and API
+      - "9090:9090"   # Prometheus metrics
+    environment:
+      - NODE_ENV=production
+      - COORDINATOR_PORT=3000
+      - PROMETHEUS_ENABLED=true
+      - PROMETHEUS_PORT=9090
+      - STATSD_ENABLED=true
+      - STATSD_HOST=statsd
+    networks:
+      - loadtest-network
+    volumes:
+      - ./results:/app/results
+      - ./scripts:/app/scripts
+      - ./.env:/app/.env
+
+  # Load Test Worker 1
+  worker1:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: hedera-worker-1
+    environment:
+      - NODE_ENV=production
+      - WORKER_ID=worker-1
+      - WORKER_PORT=3001
+      - COORDINATOR_URL=http://coordinator:3000
+    env_file:
+      - .env
+    depends_on:
+      - coordinator
+    networks:
+      - loadtest-network
+    volumes:
+      - ./scripts:/app/scripts
+
+  # Load Test Worker 2
+  worker2:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: hedera-worker-2
+    environment:
+      - NODE_ENV=production
+      - WORKER_ID=worker-2
+      - WORKER_PORT=3001
+      - COORDINATOR_URL=http://coordinator:3000
+    env_file:
+      - .env
+    depends_on:
+      - coordinator
+    networks:
+      - loadtest-network
+    volumes:
+      - ./scripts:/app/scripts
+
+  # Load Test Worker 3 (optional - uncomment to add more workers)
+  # worker3:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.worker
+  #   container_name: hedera-worker-3
+  #   environment:
+  #     - NODE_ENV=production
+  #     - WORKER_ID=worker-3
+  #     - WORKER_PORT=3001
+  #     - COORDINATOR_URL=http://coordinator:3000
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - coordinator
+  #   networks:
+  #     - loadtest-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hedera-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - loadtest-network
+
+  # Grafana for visualization (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: hedera-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - loadtest-network
+    depends_on:
+      - prometheus
+
+  # StatsD for metrics aggregation
+  statsd:
+    image: statsd/statsd:latest
+    container_name: hedera-statsd
+    ports:
+      - "8125:8125/udp"
+      - "8126:8126"
+    volumes:
+      - ./docker/statsd-config.js:/usr/src/app/config.js
+    networks:
+      - loadtest-network
+
+networks:
+  loadtest-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
