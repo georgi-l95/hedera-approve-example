@@ -1,10 +1,26 @@
 {
-  "name": "hedera-approve-example",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "hedera-perf-framework",
+  "version": "2.0.0",
+  "description": "Performance and load testing framework for Hedera consensus nodes",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "hedera-perf": "./dist/cli.js"
+  },
   "scripts": {
-    "deploy": "node scripts/deploy.js"
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "clean": "rm -rf dist",
+    "deploy": "node scripts/deploy.js",
+    "scenario:token": "node dist/cli.js test --scenario token-transfer",
+    "scenario:approval": "node dist/cli.js test --scenario approval",
+    "scenario:contract": "node dist/cli.js test --scenario contract-call"
   },
   "type": "module",
   "repository": {
@@ -20,6 +36,21 @@
   "dependencies": {
     "@hashgraph/sdk": "^2.23.0",
     "@openzeppelin/contracts": "^4.8.2",
-    "dotenv": "^16.0.3"
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "dotenv": "^16.0.3",
+    "joi": "^17.11.0",
+    "ora": "^7.0.1",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.8",
+    "@types/node": "^20.9.0",
+    "@typescript-eslint/eslint-plugin": "^6.11.0",
+    "@typescript-eslint/parser": "^6.11.0",
+    "eslint": "^8.53.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2"
   }
 }
