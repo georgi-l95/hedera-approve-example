@@ -1,0 +1,25 @@
+{
+  "network": {
+    "name": "testnet",
+    "maxConnections": 10
+  },
+  "test": {
+    "duration": 300,
+    "concurrency": 10,
+    "rampUpTime": 30,
+    "scenarios": ["token-transfer"]
+  },
+  "retry": {
+    "maxRetries": 3,
+    "retryDelay": 1000,
+    "backoffMultiplier": 2
+  },
+  "logging": {
+    "level": "info"
+  },
+  "metrics": {
+    "collectInterval": 1000,
+    "exportFormats": ["json", "csv", "html"],
+    "outputDir": "./results"
+  }
+}
